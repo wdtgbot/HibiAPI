@@ -163,7 +163,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
 name = "confuse"
-version = "1.6.0"
+version = "1.7.0"
 description = "Painless YAML configuration."
 category = "main"
 optional = false
@@ -862,8 +862,8 @@ colorama = [
     {file = "colorama-0.4.4.tar.gz", hash = "sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b"},
 ]
 confuse = [
-    {file = "confuse-1.6.0-py2.py3-none-any.whl", hash = "sha256:82137fae8aab189901f16ed9155268e34ec8673f13db0ad331ab670528ceb999"},
-    {file = "confuse-1.6.0.tar.gz", hash = "sha256:d60104c0b2a708041ac27487fa6ee69bd37d910549659c7ba92f52cbe2ced4dc"},
+    {file = "confuse-1.7.0-py2.py3-none-any.whl", hash = "sha256:f002a733b3a4c16f73a094fcca3c80715b66e0ec08000983dc755267e2bd069f"},
+    {file = "confuse-1.7.0.tar.gz", hash = "sha256:c9fe8474516a62397f8e52fcf89547bb2f2737b1a4a6f6dec11a286f0b3a7401"},
 ]
 coverage = [
     {file = "coverage-6.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:6dbc1536e105adda7a6312c778f15aaabe583b0e9a0b0a324990334fd458c94b"},
