@@ -1,7 +1,7 @@
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Type, TypeVar, overload
+from typing import Any, Optional, TypeVar, overload
 
 import confuse
 import dotenv
@@ -17,21 +17,32 @@ _T = TypeVar("_T")
 
 class ConfigSubView(confuse.Subview):
     @overload
-    def get(self) -> Any:
-        ...
+    def get(self) -> Any: ...
 
     @overload
-    def get(self, template: Type[_T]) -> _T:
-        ...
+    def get(self, template: type[_T]) -> _T: ...
 
-    def get(self, template: Type[_T] = Any) -> _T:
-        return parse_obj_as(template, super().get())
+    def get(self, template: Optional[type[_T]] = None):  # type: ignore
+        object_ = super().get()
+        if template is not None:
+            return parse_obj_as(template, object_)
+        return object_
+
+    def get_optional(self, template: type[_T]) -> Optional[_T]:
+        try:
+            return self.get(template)
+        except Exception:
+            return None
 
     def as_str(self) -> str:
         return self.get(str)
 
-    def as_str_seq(self, split: str = "\n") -> List[str]:
-        return self.as_str().strip().split(split)
+    def as_str_seq(self, split: str = "\n") -> list[str]:  # type: ignore
+        return [
+            stripped
+            for line in self.as_str().strip().split(split)
+            if (stripped := line.strip())
+        ]
 
     def as_number(self) -> int:
         return self.get(int)
@@ -42,8 +53,8 @@ class ConfigSubView(confuse.Subview):
     def as_path(self) -> Path:
         return self.get(Path)
 
-    def as_dict(self) -> Dict[str, Any]:
-        return self.get(Dict[str, Any])
+    def as_dict(self) -> dict[str, Any]:
+        return self.get(dict[str, Any])
 
     def __getitem__(self, key: str) -> "ConfigSubView":
         return self.__class__(self, key)
@@ -73,7 +84,7 @@ class AppConfig(confuse.Configuration):
             if k.lower().startswith(config_name)
         }
         # Convert `AAA_BBB_CCC=DDD` to `{'aaa':{'bbb':{'ccc':'ddd'}}}`
-        source_tree: Dict[str, Any] = {}
+        source_tree: dict[str, Any] = {}
         for key, value in env_configs.items():
             _tmp = source_tree
             *nodes, name = key.split("_")

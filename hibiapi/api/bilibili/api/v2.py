@@ -1,14 +1,10 @@
+from collections.abc import Coroutine
 from enum import Enum
 from functools import wraps
-from typing import Callable, Coroutine, Optional, TypeVar, Union
+from typing import Callable, Optional, TypeVar
 
 from hibiapi.api.bilibili.api.base import (
     BaseBilibiliEndpoint,
-    CommentSortType,
-    CommentType,
-    RankBangumiType,
-    RankContentType,
-    RankDurationType,
     TimelineType,
     VideoFormatType,
     VideoQualityType,
@@ -80,33 +76,6 @@ class BilibiliEndpointV2(BaseEndpoint, cache_endpoints=False):
     async def seasonrecommend(self, *, season_id: int):  # NOTE: not same with origin
         return await self.base.season_recommend(season_id=season_id)
 
-    @process_keyerror
-    async def comments(
-        self,
-        *,
-        aid: Optional[int] = None,
-        season_id: Optional[int] = None,
-        index: Optional[int] = None,
-        sort: CommentSortType = CommentSortType.TIME,
-        page: int = 1,
-        pagesize: int = 20,
-    ):  # NOTE: not same with origin
-        if season_id is not None:
-            assert index is not None, "parameter 'index' is required"
-            season_info = await self.base.season_info(season_id=season_id)
-            oid = season_info["result"]["episodes"][index - 1]["av_id"]
-        elif aid is not None:
-            oid = aid
-        else:
-            raise ClientSideException
-        return await self.base.comments(
-            oid=oid,
-            sort=sort,
-            type=CommentType.VIDEO,
-            page=page,
-            pagesize=pagesize,
-        )
-
     async def search(
         self,
         *,
@@ -126,31 +95,6 @@ class BilibiliEndpointV2(BaseEndpoint, cache_endpoints=False):
                 page=page,
                 pagesize=pagesize,
             )
-
-    async def rank(
-        self,
-        *,
-        content: Union[RankContentType, RankBangumiType] = RankContentType.FULL_SITE,
-        duration: RankDurationType = RankDurationType.THREE_DAY,
-        new: bool = True,
-    ):
-        if isinstance(content, int):
-            return await self.base.rank_list(
-                content=content,
-                duration=duration,
-                new=new,
-            )
-        else:
-            return await self.base.rank_list_bangumi(
-                site=content,
-                duration=duration,
-            )
-
-    async def typedynamic(self):
-        return await self.base.type_dynamic()
-
-    async def recommend(self):
-        return await self.base.recommend()
 
     async def timeline(
         self, *, type: TimelineType = TimelineType.GLOBAL

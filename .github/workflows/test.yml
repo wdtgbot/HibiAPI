@@ -18,7 +18,7 @@ jobs:
     name: Count Lines of Code
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Install CLoC
         run: |
@@ -35,13 +35,8 @@ jobs:
 
     strategy:
       matrix:
-        python: ["3.8", "3.9", "3.10", "3.11"]
+        python: ["3.9", "3.10", "3.11", "3.12"]
         os: [ubuntu-latest, windows-latest, macos-latest]
-        include:
-          - python: pypy3.8
-            os: ubuntu-latest
-          - python: pypy3.9
-            os: ubuntu-latest
       max-parallel: 3
 
     defaults:
@@ -57,29 +52,20 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Install poetry
-        run: pipx install poetry
-
-      - uses: actions/setup-python@v4
+      - uses: pdm-project/setup-pdm@v3
         with:
           python-version: ${{ matrix.python }}
-          cache: poetry
+          cache: true
 
       - name: Install dependencies
         timeout-minutes: 5
-        run: poetry install
+        run: pdm install
 
       - name: Testing with pytest
         timeout-minutes: 15
-        shell: bash
         run: |
           curl -L ${{ secrets.DOTENV_LINK }} > .env
-          poetry run pytest -n auto \
-            --dist loadfile \
-            --cov ./hibiapi/ \
-            --cov-report xml \
-            --cov-report term-missing \
-            ./test
+          pdm test
 
       - name: Create step summary
         if: always()
@@ -88,7 +74,7 @@ jobs:
           echo "OS: ${{ matrix.os }}" >> $GITHUB_STEP_SUMMARY
           echo "Python: ${{ matrix.python }}" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          poetry run coverage report -m >> $GITHUB_STEP_SUMMARY
+          pdm run coverage report -m >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
       - uses: codecov/codecov-action@v3

@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from typing import Optional
 
 import typer
 import uvicorn
@@ -44,6 +43,14 @@ LOG_CONFIG = {
     },
 }
 
+RELOAD_CONFIG = {
+    "reload": True,
+    "reload_dirs": [
+        *map(str, [Path(root_file).parent.absolute(), CONFIG_DIR.absolute()])
+    ],
+    "reload_includes": ["*.py", "*.yml"],
+}
+
 
 cli = typer.Typer()
 
@@ -57,13 +64,14 @@ def run(
     workers: int = 1,
     reload: bool = False,
 ):
-    if ctx.invoked_subcommand is None:
+    if ctx.invoked_subcommand is not None:
+        return
+
+    if ctx.info_name != (func_name := run.__name__):
         logger.warning(
             f"Directly usage of command <r>{ctx.info_name}</r> is <b>deprecated</b>, "
-            f"please use <g>{ctx.info_name} run</g> instead."
+            f"please use <g>{ctx.info_name} {func_name}</g> instead."
         )
-    else:
-        return
 
     try:
         terminal_width, _ = os.get_terminal_size()
@@ -81,12 +89,8 @@ def run(
         access_log=False,
         log_config=LOG_CONFIG,
         workers=workers,
-        reload=reload,
-        reload_dirs=[
-            *map(str, [Path(root_file).parent.absolute(), CONFIG_DIR.absolute()])
-        ],
-        reload_includes=["*.py", "*.yml"],
-        forwarded_allow_ips=Config["server"]["allowed-forward"].get(Optional[str]),
+        forwarded_allow_ips=Config["server"]["allowed-forward"].get_optional(str),
+        **(RELOAD_CONFIG if reload else {}),
     )
 
 

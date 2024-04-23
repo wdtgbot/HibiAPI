@@ -42,6 +42,7 @@
   - 网易云音乐的音乐/MV 等信息获取和搜索
   - 百度贴吧的帖子内容的获取
   - [爱壁纸](https://adesk.com/)的横版和竖版壁纸获取
+  - 哔咔漫画的漫画信息获取和搜索
   - …
 
 - 该项目的前身是 Imjad API[^1]
@@ -83,10 +84,9 @@
 - [ ] ~~企鹅 FM~~ (似乎用的人不是很多)
 - [x] 百度贴吧
 - [x] 爱壁纸
+- [x] 哔咔漫画
 
 ## 部署指南
-
-[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
 
 - 手动部署指南: **[点击此处查看](https://github.com/mixmoe/HibiAPI/wiki/Deployment)**
 
@@ -101,19 +101,12 @@
 - 公开搭建实例
   | **站点名称** | **网址** | **状态** |
   | :--------------------------: | :-----------------------------: | :---------------------: |
-  | **官方 Demo[^3]** | <https://api.obfs.dev> | [![official][official]][official-stats] |
-  | 轻零 API | <https://hibiapi.lite0.com> | ![lite0][lite0] |
-  | Kyomotoi の菜几服务 | <https://api.kyomotoi.moe> | ![kyo][kyo] |
-  | 老狐狸 API | <https://hibiapi.aliserver.net> | ![older-fox][older-fox] |
+  | **官方 Demo[^3]** | <https://api.obfs.dev> | ![official][official] |
   | [MyCard](https://mycard.moe) | <https://hibi.moecube.com> | ![mycard][mycard] |
 
 [^3]: 为了减轻服务器负担, Demo 服务器已开启了 Cloudflare 全站缓存, 如果有实时获取更新的需求, 请自行搭建或使用其他部署实例
 
 [official]: https://img.shields.io/website?url=https%3A%2F%2Fapi.obfs.dev%2Fopenapi.json
-[official-stats]: https://metrics.librato.com/s/public/g1hepph3j
-[lite0]: https://img.shields.io/website?url=https%3A%2F%2Fhibiapi.lite0.com%2Fopenapi.json
-[kyo]: https://img.shields.io/website?url=https%3A%2F%2Fapi.kyomotoi.moe%2Fopenapi.json
-[older-fox]: https://img.shields.io/website?url=https%3A%2F%2Fhibiapi.aliserver.net%2Fopenapi.json
 [mycard]: https://img.shields.io/website?url=https%3A%2F%2Fhibi.moecube.com%2Fopenapi.json
 
 ## 特别鸣谢
@@ -132,11 +125,9 @@
 
 - 百度贴吧: [`libsgh/tieba-api`](https://github.com/libsgh/tieba-api)
 
-### 贡献者们
+- 哔咔漫画：[`niuhuan/pica-rust`](https://github.com/niuhuan/pica-rust) [`abbeyokgo/PicaComic-Api`](https://github.com/abbeyokgo/PicaComic-Api)
 
-<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-8-orange.svg?style=flat-square)](#contributors-)
-<!-- ALL-CONTRIBUTORS-BADGE:END -->
+### 贡献者们
 
 感谢这些为这个项目作出贡献的各位大佬:
 
@@ -144,18 +135,22 @@
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
 <table>
-  <tr>
-    <td align="center"><a href="http://kyomotoi.moe"><img src="https://avatars.githubusercontent.com/u/37587870?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Kyomotoi</b></sub></a><br /><a href="https://github.com/mixmoe/HibiAPI/commits?author=Kyomotoi" title="Documentation">📖</a> <a href="https://github.com/mixmoe/HibiAPI/commits?author=Kyomotoi" title="Tests">⚠️</a></td>
-    <td align="center"><a href="http://thdog.moe"><img src="https://avatars.githubusercontent.com/u/46120251?v=4?s=100" width="100px;" alt=""/><br /><sub><b>城倉奏</b></sub></a><br /><a href="#example-shirokurakana" title="Examples">💡</a></td>
-    <td align="center"><a href="http://skipm4.com"><img src="https://avatars.githubusercontent.com/u/40311581?v=4?s=100" width="100px;" alt=""/><br /><sub><b>SkipM4</b></sub></a><br /><a href="https://github.com/mixmoe/HibiAPI/commits?author=SkipM4" title="Documentation">📖</a></td>
-    <td align="center"><a href="https://github.com/leaf7th"><img src="https://avatars.githubusercontent.com/u/38352552?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Nook</b></sub></a><br /><a href="https://github.com/mixmoe/HibiAPI/commits?author=leaf7th" title="Code">💻</a></td>
-    <td align="center"><a href="https://github.com/jiangzhuochi"><img src="https://avatars.githubusercontent.com/u/50538375?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Jocky Chiang</b></sub></a><br /><a href="https://github.com/mixmoe/HibiAPI/commits?author=jiangzhuochi" title="Code">💻</a></td>
-    <td align="center"><a href="https://github.com/cleoold"><img src="https://avatars.githubusercontent.com/u/13920903?v=4?s=100" width="100px;" alt=""/><br /><sub><b>midori</b></sub></a><br /><a href="https://github.com/mixmoe/HibiAPI/commits?author=cleoold" title="Documentation">📖</a></td>
-    <td align="center"><a href="https://www.2yo.cc"><img src="https://avatars.githubusercontent.com/u/41198038?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Pretty9</b></sub></a><br /><a href="https://github.com/mixmoe/HibiAPI/commits?author=Pretty9" title="Code">💻</a></td>
-  </tr>
-  <tr>
-    <td align="center"><a href="https://nocilol.me/"><img src="https://avatars.githubusercontent.com/u/16256221?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Jad</b></sub></a><br /><a href="https://github.com/mixmoe/HibiAPI/issues?q=author%3Ajourney-ad" title="Bug reports">🐛</a> <a href="#ideas-journey-ad" title="Ideas, Planning, & Feedback">🤔</a></td>
-  </tr>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="http://kyomotoi.moe"><img src="https://avatars.githubusercontent.com/u/37587870?v=4?s=100" width="100px;" alt="Kyomotoi"/><br /><sub><b>Kyomotoi</b></sub></a><br /><a href="https://github.com/mixmoe/HibiAPI/commits?author=Kyomotoi" title="Documentation">📖</a> <a href="https://github.com/mixmoe/HibiAPI/commits?author=Kyomotoi" title="Tests">⚠️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://thdog.moe"><img src="https://avatars.githubusercontent.com/u/46120251?v=4?s=100" width="100px;" alt="城倉奏"/><br /><sub><b>城倉奏</b></sub></a><br /><a href="#example-shirokurakana" title="Examples">💡</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://skipm4.com"><img src="https://avatars.githubusercontent.com/u/40311581?v=4?s=100" width="100px;" alt="SkipM4"/><br /><sub><b>SkipM4</b></sub></a><br /><a href="https://github.com/mixmoe/HibiAPI/commits?author=SkipM4" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/leaf7th"><img src="https://avatars.githubusercontent.com/u/38352552?v=4?s=100" width="100px;" alt="Nook"/><br /><sub><b>Nook</b></sub></a><br /><a href="https://github.com/mixmoe/HibiAPI/commits?author=leaf7th" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/jiangzhuochi"><img src="https://avatars.githubusercontent.com/u/50538375?v=4?s=100" width="100px;" alt="Jocky Chiang"/><br /><sub><b>Jocky Chiang</b></sub></a><br /><a href="https://github.com/mixmoe/HibiAPI/commits?author=jiangzhuochi" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/cleoold"><img src="https://avatars.githubusercontent.com/u/13920903?v=4?s=100" width="100px;" alt="midori"/><br /><sub><b>midori</b></sub></a><br /><a href="https://github.com/mixmoe/HibiAPI/commits?author=cleoold" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.2yo.cc"><img src="https://avatars.githubusercontent.com/u/41198038?v=4?s=100" width="100px;" alt="Pretty9"/><br /><sub><b>Pretty9</b></sub></a><br /><a href="https://github.com/mixmoe/HibiAPI/commits?author=Pretty9" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://nocilol.me/"><img src="https://avatars.githubusercontent.com/u/16256221?v=4?s=100" width="100px;" alt="Jad"/><br /><sub><b>Jad</b></sub></a><br /><a href="https://github.com/mixmoe/HibiAPI/issues?q=author%3Ajourney-ad" title="Bug reports">🐛</a> <a href="#ideas-journey-ad" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://nanoka.top"><img src="https://avatars.githubusercontent.com/u/31837214?v=4?s=100" width="100px;" alt="Yumine Sakura"/><br /><sub><b>Yumine Sakura</b></sub></a><br /><a href="https://github.com/mixmoe/HibiAPI/commits?author=asadahimeka" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/yeyang52"><img src="https://avatars.githubusercontent.com/u/107110851?v=4?s=100" width="100px;" alt="yeyang"/><br /><sub><b>yeyang</b></sub></a><br /><a href="https://github.com/mixmoe/HibiAPI/commits?author=yeyang52" title="Code">💻</a></td>
+    </tr>
+  </tbody>
 </table>
 
 <!-- markdownlint-restore -->

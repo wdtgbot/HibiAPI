@@ -6,7 +6,7 @@ from datetime import timedelta
 from enum import IntEnum
 from ipaddress import IPv4Address
 from random import randint
-from typing import Any, Dict, List, Optional
+from typing import Annotated, Any, Optional
 
 from Cryptodome.Cipher import AES
 from Cryptodome.Util.Padding import pad
@@ -55,6 +55,16 @@ class BitRateType(IntEnum):
 
 
 @enum_auto_doc
+class MVResolutionType(IntEnum):
+    """MV分辨率"""
+
+    QVGA = 240
+    VGA = 480
+    HD = 720
+    FHD = 1080
+
+
+@enum_auto_doc
 class RecordPeriodType(IntEnum):
     """听歌记录时段类型"""
 
@@ -88,7 +98,7 @@ class _EncryptUtil:
         return f"{result:0>256x}"
 
     @classmethod
-    def encrypt(cls, data: Dict[str, Any]) -> Dict[str, str]:
+    def encrypt(cls, data: dict[str, Any]) -> dict[str, str]:
         secret = bytes(secrets.choice(cls.alphabets) for _ in range(16))
         secure_key = cls._rsa(bytes(reversed(secret)))
         return {
@@ -119,8 +129,8 @@ class NeteaseEndpoint(BaseEndpoint):
     @dont_route
     @catch_network_error
     async def request(
-        self, endpoint: str, *, params: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, endpoint: str, *, params: Optional[dict[str, Any]] = None
+    ) -> dict[str, Any]:
         params = {
             **(params or {}),
             "csrf_token": self.client.cookies.get("__csrf", ""),
@@ -176,9 +186,13 @@ class NeteaseEndpoint(BaseEndpoint):
             },
         )
 
-    async def detail(self, *, id: List[int] = Query()):
+    async def detail(
+        self,
+        *,
+        id: Annotated[list[int], Query()],
+    ):
         return await self.request(
-            "weapi/v3/song/detail",
+            "api/v3/song/detail",
             params={
                 "c": json.dumps(
                     [{"id": str(i)} for i in id],
@@ -190,7 +204,7 @@ class NeteaseEndpoint(BaseEndpoint):
     async def song(
         self,
         *,
-        id: List[int] = Query(),
+        id: Annotated[list[int], Query()],
         br: BitRateType = BitRateType.STANDARD,
     ):
         return await self.request(
@@ -230,6 +244,20 @@ class NeteaseEndpoint(BaseEndpoint):
             "api/v1/mv/detail",
             params={
                 "id": id,
+            },
+        )
+
+    async def mv_url(
+        self,
+        *,
+        id: int,
+        res: MVResolutionType = MVResolutionType.FHD,
+    ):
+        return await self.request(
+            "weapi/song/enhance/play/mv/url",
+            params={
+                "id": id,
+                "r": res,
             },
         )
 

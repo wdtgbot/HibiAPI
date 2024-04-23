@@ -1,7 +1,8 @@
+import asyncio
 from base64 import urlsafe_b64decode
 from datetime import datetime, timezone
 from functools import lru_cache
-from typing import TYPE_CHECKING, Any, Dict, Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -47,6 +48,7 @@ class NetRequest(BaseNetClient):
             headers=BikaConstants.DEFAULT_HEADERS.copy(),
             proxies=BikaConstants.CONFIG["proxy"].as_dict(),
         )
+        self.auth_lock = asyncio.Lock()
 
     @property
     def token(self) -> Optional[str]:
@@ -57,7 +59,7 @@ class NetRequest(BaseNetClient):
 
     async def login(self, endpoint: "BikaEndpoints"):
         login_data = BikaConstants.CONFIG["account"].get(BikaLogin)
-        login_result: Dict[str, Any] = await endpoint.request(
+        login_result: dict[str, Any] = await endpoint.request(
             "auth/sign-in",
             body=login_data.dict(),
             no_token=True,

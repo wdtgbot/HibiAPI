@@ -1,6 +1,8 @@
+import json
+import re
 from datetime import date, timedelta
 from enum import Enum
-from typing import Any, Dict, Optional, cast
+from typing import Any, Literal, Optional, Union, cast, overload
 
 from hibiapi.api.pixiv.constants import PixivConstants
 from hibiapi.api.pixiv.net import NetRequest as PixivNetClient
@@ -35,14 +37,27 @@ class RankingType(str, Enum):
     day_female = "day_female"
     """女性向"""
     week_original = "week_original"
-    """原创"""
+    """原创周榜"""
     week_rookie = "week_rookie"
-    """新人"""
+    """新人周榜"""
+    day_ai = "day_ai"
+    """AI日榜"""
+    day_manga = "day_manga"
+    """漫画日榜"""
+    week_manga = "week_manga"
+    """漫画周榜"""
+    month_manga = "month_manga"
+    """漫画月榜"""
+    week_rookie_manga = "week_rookie_manga"
+    """漫画新人周榜"""
     day_r18 = "day_r18"
     day_male_r18 = "day_male_r18"
     day_female_r18 = "day_female_r18"
     week_r18 = "week_r18"
     week_r18g = "week_r18g"
+    day_r18_ai = "day_r18_ai"
+    day_r18_manga = "day_r18_manga"
+    week_r18_manga = "week_r18_manga"
 
 
 @enum_auto_doc
@@ -67,7 +82,7 @@ class SearchNovelModeType(str, Enum):
     """标签完全一致"""
     text = "text"
     """正文"""
-    keywords = "keywords"
+    keyword = "keyword"
     """关键词"""
 
 
@@ -116,17 +131,46 @@ class PixivEndpoints(BaseEndpoint):
         language_code, *_ = first_language.partition(";")
         return language_code.lower().strip()
 
+    @overload
+    async def request(
+        self,
+        endpoint: str,
+        *,
+        params: Optional[dict[str, Any]] = None,
+        return_text: Literal[False] = False,
+    ) -> dict[str, Any]: ...
+
+    @overload
+    async def request(
+        self,
+        endpoint: str,
+        *,
+        params: Optional[dict[str, Any]] = None,
+        return_text: Literal[True],
+    ) -> str: ...
+
     @dont_route
     @catch_network_error
     async def request(
-        self, endpoint: str, *, params: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self,
+        endpoint: str,
+        *,
+        params: Optional[dict[str, Any]] = None,
+        return_text: bool = False,
+    ) -> Union[dict[str, Any], str]:
         headers = self.client.headers.copy()
-        if user := cast(PixivNetClient, self.client.net_client).user:
-            headers["Authorization"] = f"Bearer {user.access_token}"
+
+        net_client = cast(PixivNetClient, self.client.net_client)
+        async with net_client.auth_lock:
+            auth, token = net_client.get_available_user()
+            if auth is None:
+                auth = await net_client.auth(token)
+        headers["Authorization"] = f"Bearer {auth.access_token}"
+
         if language := request_headers.get().get("Accept-Language"):
             language = self._parse_accept_language(language)
             headers["Accept-Language"] = language
+
         response = await self.client.get(
             self._join(
                 base=PixivConstants.APP_HOST,
@@ -135,6 +179,8 @@ class PixivEndpoints(BaseEndpoint):
             ),
             headers=headers,
         )
+        if return_text:
+            return response.text
         return response.json()
 
     @cache_config(ttl=timedelta(days=3))
@@ -151,7 +197,7 @@ class PixivEndpoints(BaseEndpoint):
         id: int,
         illust_type: IllustType = IllustType.illust,
         page: int = 1,
-        size: int = 20,
+        size: int = 30,
     ):
         return await self.request(
             "v1/user/illusts",
@@ -179,7 +225,23 @@ class PixivEndpoints(BaseEndpoint):
             },
         )
 
-    async def following(self, *, id: int, page: int = 1, size: int = 20):
+    # 用户收藏的小说
+    async def favorite_novel(
+        self,
+        *,
+        id: int,
+        tag: Optional[str] = None,
+    ):
+        return await self.request(
+            "v1/user/bookmarks/novel",
+            params={
+                "user_id": id,
+                "tag": tag,
+                "restrict": "public",
+            },
+        )
+
+    async def following(self, *, id: int, page: int = 1, size: int = 30):
         return await self.request(
             "v1/user/following",
             params={
@@ -188,7 +250,7 @@ class PixivEndpoints(BaseEndpoint):
             },
         )
 
-    async def follower(self, *, id: int, page: int = 1, size: int = 20):
+    async def follower(self, *, id: int, page: int = 1, size: int = 30):
         return await self.request(
             "v1/user/follower",
             params={
@@ -204,7 +266,7 @@ class PixivEndpoints(BaseEndpoint):
         mode: RankingType = RankingType.week,
         date: Optional[RankingDate] = None,
         page: int = 1,
-        size: int = 50,
+        size: int = 30,
     ):
         return await self.request(
             "v1/illust/ranking",
@@ -223,7 +285,9 @@ class PixivEndpoints(BaseEndpoint):
         order: SearchSortType = SearchSortType.date_desc,
         duration: Optional[SearchDurationType] = None,
         page: int = 1,
-        size: int = 50,
+        size: int = 30,
+        include_translated_tag_results: bool = True,
+        search_ai_type: bool = True,  # 搜索结果是否包含AI作品
     ):
         return await self.request(
             "v1/search/illust",
@@ -233,6 +297,55 @@ class PixivEndpoints(BaseEndpoint):
                 "sort": order,
                 "duration": duration,
                 "offset": (page - 1) * size,
+                "include_translated_tag_results": include_translated_tag_results,
+                "search_ai_type": 1 if search_ai_type else 0,
+            },
+        )
+
+    # 热门插画作品预览
+    async def popular_preview(
+        self,
+        *,
+        word: str,
+        mode: SearchModeType = SearchModeType.partial_match_for_tags,
+        merge_plain_keyword_results: bool = True,
+        include_translated_tag_results: bool = True,
+        filter: str = "for_ios",
+    ):
+        return await self.request(
+            "v1/search/popular-preview/illust",
+            params={
+                "word": word,
+                "search_target": mode,
+                "merge_plain_keyword_results": merge_plain_keyword_results,
+                "include_translated_tag_results": include_translated_tag_results,
+                "filter": filter,
+            },
+        )
+
+    async def search_user(
+        self,
+        *,
+        word: str,
+        page: int = 1,
+        size: int = 30,
+    ):
+        return await self.request(
+            "v1/search/user",
+            params={"word": word, "offset": (page - 1) * size},
+        )
+
+    async def tags_autocomplete(
+        self,
+        *,
+        word: str,
+        merge_plain_keyword_results: bool = True,
+    ):
+        return await self.request(
+            "/v2/search/autocomplete",
+            params={
+                "word": word,
+                "merge_plain_keyword_results": merge_plain_keyword_results,
             },
         )
 
@@ -241,7 +354,7 @@ class PixivEndpoints(BaseEndpoint):
         return await self.request("v1/trending-tags/illust")
 
     @cache_config(ttl=timedelta(minutes=15))
-    async def related(self, *, id: int, page: int = 1, size: int = 20):
+    async def related(self, *, id: int, page: int = 1, size: int = 30):
         return await self.request(
             "v2/illust/related",
             params={
@@ -259,7 +372,114 @@ class PixivEndpoints(BaseEndpoint):
             },
         )
 
-    async def member_novel(self, *, id: int, page: int = 1, size: int = 20):
+    # 大家的新作品（插画）
+    async def illust_new(
+        self,
+        *,
+        content_type: str = "illust",
+    ):
+        return await self.request(
+            "v1/illust/new",
+            params={
+                "content_type": content_type,
+                "filter": "for_ios",
+            },
+        )
+
+    # pixivision(亮点/特辑) 列表
+    async def spotlights(
+        self,
+        *,
+        category: str = "all",
+        page: int = 1,
+        size: int = 10,
+    ):
+        return await self.request(
+            "v1/spotlight/articles",
+            params={
+                "filter": "for_ios",
+                "category": category,
+                "offset": (page - 1) * size,
+            },
+        )
+
+    # 插画评论
+    async def illust_comments(
+        self,
+        *,
+        id: int,
+        page: int = 1,
+        size: int = 30,
+    ):
+        return await self.request(
+            "v3/illust/comments",
+            params={
+                "illust_id": id,
+                "offset": (page - 1) * size,
+            },
+        )
+
+    # 插画评论回复
+    async def illust_comment_replies(
+        self,
+        *,
+        id: int,
+    ):
+        return await self.request(
+            "v2/illust/comment/replies",
+            params={
+                "comment_id": id,
+            },
+        )
+
+    # 小说评论
+    async def novel_comments(
+        self,
+        *,
+        id: int,
+        page: int = 1,
+        size: int = 30,
+    ):
+        return await self.request(
+            "v3/novel/comments",
+            params={
+                "novel_id": id,
+                "offset": (page - 1) * size,
+            },
+        )
+
+    # 小说评论回复
+    async def novel_comment_replies(
+        self,
+        *,
+        id: int,
+    ):
+        return await self.request(
+            "v2/novel/comment/replies",
+            params={
+                "comment_id": id,
+            },
+        )
+
+    # 小说排行榜
+    async def rank_novel(
+        self,
+        *,
+        mode: str = "day",
+        date: Optional[RankingDate] = None,
+        page: int = 1,
+        size: int = 30,
+    ):
+        return await self.request(
+            "v1/novel/ranking",
+            params={
+                "mode": mode,
+                "date": RankingDate.new(date or RankingDate.yesterday()).toString(),
+                "offset": (page - 1) * size,
+            },
+        )
+
+    async def member_novel(self, *, id: int, page: int = 1, size: int = 30):
         return await self.request(
             "/v1/user/novels",
             params={
@@ -274,8 +494,29 @@ class PixivEndpoints(BaseEndpoint):
     async def novel_detail(self, *, id: int):
         return await self.request("/v2/novel/detail", params={"novel_id": id})
 
+    # 已被官方移除，调用 webview/v2/novel 作兼容处理
     async def novel_text(self, *, id: int):
-        return await self.request("/v1/novel/text", params={"novel_id": id})
+        # return await self.request("/v1/novel/text", params={"novel_id": id})
+        response = await self.webview_novel(id=id)
+        return {"novel_text": response["text"] or ""}
+
+    # 获取小说 HTML 后解析 JSON
+    async def webview_novel(self, *, id: int):
+        response = await self.request(
+            "webview/v2/novel",
+            params={
+                "id": id,
+                "viewer_version": "20221031_ai",
+            },
+            return_text=True,
+        )
+
+        novel_match = re.search(r"novel:\s+(?P<data>{.+?}),\s+isOwnWork", response)
+        return json.loads(novel_match["data"] if novel_match else response)
+
+    @cache_config(ttl=timedelta(hours=12))
+    async def tags_novel(self):
+        return await self.request("v1/trending-tags/novel")
 
     async def search_novel(
         self,
@@ -287,7 +528,8 @@ class PixivEndpoints(BaseEndpoint):
         include_translated_tag_results: bool = True,
         duration: Optional[SearchDurationType] = None,
         page: int = 1,
-        size: int = 50,
+        size: int = 30,
+        search_ai_type: bool = True,  # 搜索结果是否包含AI作品
     ):
         return await self.request(
             "/v1/search/novel",
@@ -299,10 +541,73 @@ class PixivEndpoints(BaseEndpoint):
                 "include_translated_tag_results": include_translated_tag_results,
                 "duration": duration,
                 "offset": (page - 1) * size,
+                "search_ai_type": 1 if search_ai_type else 0,
+            },
+        )
+
+    # 热门小说作品预览
+    async def popular_preview_novel(
+        self,
+        *,
+        word: str,
+        mode: SearchNovelModeType = SearchNovelModeType.partial_match_for_tags,
+        merge_plain_keyword_results: bool = True,
+        include_translated_tag_results: bool = True,
+        filter: str = "for_ios",
+    ):
+        return await self.request(
+            "v1/search/popular-preview/novel",
+            params={
+                "word": word,
+                "search_target": mode,
+                "merge_plain_keyword_results": merge_plain_keyword_results,
+                "include_translated_tag_results": include_translated_tag_results,
+                "filter": filter,
             },
         )
 
     async def novel_new(self, *, max_novel_id: Optional[int] = None):
         return await self.request(
             "/v1/novel/new", params={"max_novel_id": max_novel_id}
+        )
+
+    # 人气直播列表
+    async def live_list(self, *, page: int = 1, size: int = 30):
+        params = {"list_type": "popular", "offset": (page - 1) * size}
+        if not params["offset"]:
+            del params["offset"]
+        return await self.request("v1/live/list", params=params)
+
+    # 相关小说作品
+    async def related_novel(self, *, id: int, page: int = 1, size: int = 30):
+        return await self.request(
+            "v1/novel/related",
+            params={
+                "novel_id": id,
+                "offset": (page - 1) * size,
+            },
+        )
+
+    # 相关用户
+    async def related_member(self, *, id: int):
+        return await self.request("v1/user/related", params={"seed_user_id": id})
+
+    # 漫画系列
+    async def illust_series(self, *, id: int, page: int = 1, size: int = 30):
+        return await self.request(
+            "v1/illust/series",
+            params={"illust_series_id": id, "offset": (page - 1) * size},
+        )
+
+    # 用户的漫画系列
+    async def member_illust_series(self, *, id: int, page: int = 1, size: int = 30):
+        return await self.request(
+            "v1/user/illust-series",
+            params={"user_id": id, "offset": (page - 1) * size},
+        )
+
+    # 用户的小说系列
+    async def member_novel_series(self, *, id: int, page: int = 1, size: int = 30):
+        return await self.request(
+            "v1/user/novel-series", params={"user_id": id, "offset": (page - 1) * size}
         )

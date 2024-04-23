@@ -1,10 +1,10 @@
-from typing import Any, Dict
+from typing import Any
 
 from hibiapi.utils.config import APIConfig
 
 
 class PixivConstants:
-    DEFAULT_HEADERS: Dict[str, Any] = {
+    DEFAULT_HEADERS: dict[str, Any] = {
         "App-OS": "ios",
         "App-OS-Version": "14.6",
         "User-Agent": "PixivIOSApp/7.13.3 (iOS 14.6; iPhone13,2)",
@@ -15,7 +15,5 @@ class PixivConstants:
         b"28c1fdd170a5204386cb1313c7077b34f83e4aaf4aa829ce78c231e05b0bae2c"
     )
     CONFIG: APIConfig = APIConfig("pixiv")
-    REFRESH_INTERVAL: int = CONFIG["account"]["refresh-interval"].as_number()
     APP_HOST: str = "https://app-api.pixiv.net"
-    PUB_HOST: str = "https://public-api.secure.pixiv.net"
     AUTH_HOST: str = "https://oauth.secure.pixiv.net"

@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Annotated, Any
 
 import pytest
 from fastapi import Depends
@@ -14,15 +14,16 @@ def client():
         yield client
 
 
-def test_openapi(client: TestClient):
+def test_openapi(client: TestClient, in_stress: bool = False):
     response = client.get("/openapi.json")
     assert response.status_code == 200
     assert response.json()
 
-    return True
+    if in_stress:
+        return True
 
 
-def test_doc_page(client: TestClient):
+def test_doc_page(client: TestClient, in_stress: bool = False):
     response = client.get("/docs")
     assert response.status_code == 200
     assert response.text
@@ -31,13 +32,14 @@ def test_doc_page(client: TestClient):
     assert response.status_code == 200
     assert response.text
 
-    return True
+    if in_stress:
+        return True
 
 
 def test_openapi_stress(client: TestClient, benchmark: BenchmarkFixture):
     assert benchmark.pedantic(
         test_openapi,
-        args=(client,),
+        args=(client, True),
         rounds=200,
         warmup_rounds=10,
         iterations=3,
@@ -45,7 +47,9 @@ def test_openapi_stress(client: TestClient, benchmark: BenchmarkFixture):
 
 
 def test_doc_page_stress(client: TestClient, benchmark: BenchmarkFixture):
-    assert benchmark.pedantic(test_doc_page, args=(client,), rounds=200, iterations=3)
+    assert benchmark.pedantic(
+        test_doc_page, args=(client, True), rounds=200, iterations=3
+    )
 
 
 def test_notfound(client: TestClient):
@@ -67,13 +71,13 @@ def test_net_request():
     class TestEndpoint(BaseEndpoint):
         base = "https://httpbin.org"
 
-        async def request(self, path: str, params: Dict[str, Any]):
+        async def request(self, path: str, params: dict[str, Any]):
             url = self._join(self.base, path, params)
             response = await self.client.post(url, data=params)
             response.raise_for_status()
             return response.json()
 
-        async def form(self, *, data: Dict[str, Any]):
+        async def form(self, *, data: dict[str, Any]):
             return await self.request("/post", data)
 
         async def teapot(self):
@@ -90,12 +94,14 @@ def test_net_request():
 
     @router.post("form")
     async def form(
-        *, data: Dict[str, Any], endpoint: TestEndpoint = Depends(net_client)
+        *,
+        endpoint: Annotated[TestEndpoint, Depends(net_client)],
+        data: dict[str, Any],
     ):
         return await endpoint.form(data=data)
 
     @router.post("teapot")
-    async def teapot(endpoint: TestEndpoint = Depends(net_client)):
+    async def teapot(endpoint: Annotated[TestEndpoint, Depends(net_client)]):
         return await endpoint.teapot()
 
     from hibiapi.app.routes import router as api_router

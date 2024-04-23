@@ -2,7 +2,7 @@ import hashlib
 import sys
 from base64 import urlsafe_b64encode
 from secrets import token_urlsafe
-from typing import Any, Callable, Dict, Optional, TypeVar
+from typing import Any, Callable, Optional, TypeVar
 from urllib.parse import parse_qs, urlencode
 
 import requests
@@ -62,17 +62,21 @@ class WebView(QWebEngineView):
     def __init__(self):
         super().__init__()
 
-        self.cookies: Dict[str, str] = {}
+        self.cookies: dict[str, str] = {}
 
         page = self.page()
+        assert page is not None
         profile = page.profile()
+        assert profile is not None
         profile.setHttpUserAgent(USER_AGENT)
         page.contentsSize().setHeight(768)
         page.contentsSize().setWidth(432)
 
         self.interceptor = RequestInterceptor()
         profile.setUrlRequestInterceptor(self.interceptor)
-        profile.cookieStore().cookieAdded.connect(self._on_cookie_added)
+        cookie_store = profile.cookieStore()
+        assert cookie_store is not None
+        cookie_store.cookieAdded.connect(self._on_cookie_added)
 
         self.setFixedHeight(896)
         self.setFixedWidth(414)
@@ -80,7 +84,7 @@ class WebView(QWebEngineView):
         self.start("about:blank")
 
     def start(self, goto: str):
-        self.page().profile().cookieStore().deleteAllCookies()
+        self.page().profile().cookieStore().deleteAllCookies()  # type: ignore
         self.cookies.clear()
         self.load(QUrl(goto))
 
@@ -115,7 +119,7 @@ class ResponseDataWidget(QWidget):
 
     def _on_clipboard_copy(self, checked: bool):
         if paste_string := self.cookie_paste.toPlainText().strip():
-            app.clipboard().setText(paste_string)
+            app.clipboard().setText(paste_string)  # type: ignore
 
 
 _T = TypeVar("_T", bound="LoginPhrase")
@@ -158,7 +162,7 @@ class LoginPhrase:
             headers={"User-Agent": USER_AGENT},
         )
         response.raise_for_status()
-        data: Dict[str, Any] = response.json()
+        data: dict[str, Any] = response.json()
 
         access_token = data["access_token"]
         refresh_token = data["refresh_token"]

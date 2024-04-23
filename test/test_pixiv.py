@@ -19,8 +19,8 @@ def client():
 
 
 def test_illust(client: TestClient):
-    # https://www.pixiv.net/artworks/86742914
-    response = client.get("illust", params={"id": 86742914})
+    # https://www.pixiv.net/artworks/109862531
+    response = client.get("illust", params={"id": 109862531})
     assert response.status_code == 200
     assert response.json().get("illust")
 
@@ -39,6 +39,11 @@ def test_member_illust(client: TestClient):
 
 def test_favorite(client: TestClient):
     response = client.get("favorite", params={"id": 3036679})
+    assert response.status_code == 200
+
+
+def test_favorite_novel(client: TestClient):
+    response = client.get("favorite_novel", params={"id": 55170615})
     assert response.status_code == 200
 
 
@@ -69,10 +74,28 @@ def test_search(client: TestClient):
     assert response.json().get("illusts")
 
 
+def test_popular_preview(client: TestClient):
+    response = client.get("popular_preview", params={"word": "東方Project"})
+    assert response.status_code == 200
+    assert response.json().get("illusts")
+
+
+def test_search_user(client: TestClient):
+    response = client.get("search_user", params={"word": "鬼针草"})
+    assert response.status_code == 200
+    assert response.json().get("user_previews")
+
+
 def test_tags(client: TestClient):
     response = client.get("tags")
     assert response.status_code == 200
     assert response.json().get("trend_tags")
+
+
+def test_tags_autocomplete(client: TestClient):
+    response = client.get("tags_autocomplete", params={"word": "甘雨"})
+    assert response.status_code == 200
+    assert response.json().get("tags")
 
 
 def test_related(client: TestClient):
@@ -85,6 +108,51 @@ def test_ugoira_metadata(client: TestClient):
     response = client.get("ugoira_metadata", params={"id": 85162550})
     assert response.status_code == 200
     assert response.json().get("ugoira_metadata")
+
+
+def test_spotlights(client: TestClient):
+    response = client.get("spotlights")
+    assert response.status_code == 200
+    assert response.json().get("spotlight_articles")
+
+
+def test_illust_new(client: TestClient):
+    response = client.get("illust_new")
+    assert response.status_code == 200
+    assert response.json().get("illusts")
+
+
+def test_illust_comments(client: TestClient):
+    response = client.get("illust_comments", params={"id": 99973718})
+    assert response.status_code == 200
+    assert response.json().get("comments")
+
+
+def test_illust_comment_replies(client: TestClient):
+    response = client.get("illust_comment_replies", params={"id": 151400579})
+    assert response.status_code == 200
+    assert response.json().get("comments")
+
+
+def test_novel_comments(client: TestClient):
+    response = client.get("novel_comments", params={"id": 12656898})
+    assert response.status_code == 200
+    assert response.json().get("comments")
+
+
+def test_novel_comment_replies(client: TestClient):
+    response = client.get("novel_comment_replies", params={"id": 42372000})
+    assert response.status_code == 200
+    assert response.json().get("comments")
+
+
+def test_rank_novel(client: TestClient):
+    for i in range(2, 5):
+        response = client.get(
+            "rank_novel", params={"date": str(date.today() - timedelta(days=i))}
+        )
+        assert response.status_code == 200
+        assert response.json().get("novels")
 
 
 def test_member_novel(client: TestClient):
@@ -111,8 +179,62 @@ def test_novel_text(client: TestClient):
     assert response.json().get("novel_text")
 
 
+def test_webview_novel(client: TestClient):
+    response = client.get("webview_novel", params={"id": 19791013})
+    assert response.status_code == 200
+    assert response.json().get("text")
+
+
+def test_live_list(client: TestClient):
+    response = client.get("live_list")
+    assert response.status_code == 200
+    assert response.json().get("lives")
+
+
+def test_related_novel(client: TestClient):
+    response = client.get("related_novel", params={"id": 19791013})
+    assert response.status_code == 200
+    assert response.json().get("novels")
+
+
+def test_related_member(client: TestClient):
+    response = client.get("related_member", params={"id": 10109777})
+    assert response.status_code == 200
+    assert response.json().get("user_previews")
+
+
+def test_illust_series(client: TestClient):
+    response = client.get("illust_series", params={"id": 218893})
+    assert response.status_code == 200
+    assert response.json().get("illust_series_detail")
+
+
+def test_member_illust_series(client: TestClient):
+    response = client.get("member_illust_series", params={"id": 4087934})
+    assert response.status_code == 200
+    assert response.json().get("illust_series_details")
+
+
+def test_member_novel_series(client: TestClient):
+    response = client.get("member_novel_series", params={"id": 86832559})
+    assert response.status_code == 200
+    assert response.json().get("novel_series_details")
+
+
+def test_tags_novel(client: TestClient):
+    response = client.get("tags_novel")
+    assert response.status_code == 200
+    assert response.json().get("trend_tags")
+
+
 def test_search_novel(client: TestClient):
     response = client.get("search_novel", params={"word": "碧蓝航线"})
+    assert response.status_code == 200
+    assert response.json().get("novels")
+
+
+def test_popular_preview_novel(client: TestClient):
+    response = client.get("popular_preview_novel", params={"word": "東方Project"})
     assert response.status_code == 200
     assert response.json().get("novels")
 
@@ -147,7 +269,7 @@ def test_request_cache(client: TestClient, benchmark: BenchmarkFixture):
 
 
 def test_rank_redirect(client: TestClient):
-    response = client.get("/pixiv/rank")
+    response = client.get("http://testserver/pixiv/rank")
 
     assert response.status_code == 200
     assert response.history

@@ -3,7 +3,7 @@ import hmac
 from datetime import timedelta
 from enum import Enum
 from time import time
-from typing import Any, Dict, Optional, cast
+from typing import Any, Optional, cast
 
 from httpx import URL
 
@@ -64,13 +64,15 @@ class BikaEndpoints(BaseEndpoint):
         self,
         endpoint: str,
         *,
-        params: Optional[Dict[str, Any]] = None,
-        body: Optional[Dict[str, Any]] = None,
+        params: Optional[dict[str, Any]] = None,
+        body: Optional[dict[str, Any]] = None,
         no_token: bool = False,
     ):
         net_client = cast(NetRequest, self.client.net_client)
-        if net_client.token is None and not no_token:
-            await net_client.login(self)
+        if not no_token:
+            async with net_client.auth_lock:
+                if net_client.token is None:
+                    await net_client.login(self)
 
         headers = {
             "Authorization": net_client.token or "",
@@ -121,8 +123,11 @@ class BikaEndpoints(BaseEndpoint):
             "comics/advanced-search",
             body={
                 "keyword": keyword,
-                "page": page,
                 "sort": sort,
+            },
+            params={
+                "page": page,
+                "s": sort,
             },
         )
 
